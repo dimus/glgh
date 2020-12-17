@@ -6,10 +6,11 @@ func graphqlRequest() *graphql.Request {
 	req := graphql.NewRequest(`
 query($repo: ID!) {
   project(fullPath: $repo) {
-    issues {
+    issues(sort: CREATED_ASC) {
       count
       nodes {
         iid
+        webUrl
         author {
           username
           name

@@ -2,16 +2,22 @@ package github
 
 import "time"
 
-type IssuesData struct {
+type Data struct {
 	Repository `json:"repository"`
 }
 
+type UserData struct {
+	User `json:"user"`
+}
+
 type Repository struct {
-	Issues `json:"issues"`
+	ID     string `json:"id,omitempty"`
+	Labels `json:"labels"`
+	Issues `json:"issues,omitempty"`
 }
 
 type Issues struct {
-	TotalCount int     `json:"count"`
+	TotalCount int     `json:"totalCount"`
 	Nodes      []Issue `json:"nodes"`
 }
 
@@ -21,6 +27,7 @@ type Issue struct {
 	Number    int        `json:"number"`
 	Title     string     `json:"title"`
 	Body      string     `json:"body,omitempty"`
+	URL       string     `json:"url"`
 	Closed    bool       `json:"closed"`
 	ClosedAt  *time.Time `json:"closedAt"`
 	CreatedAt time.Time  `json:"createdAt"`
@@ -38,6 +45,7 @@ type Actor struct {
 }
 
 type User struct {
+	ID    string `json:"id,omitempty"`
 	Login string `json:"login"`
 }
 
@@ -53,10 +61,30 @@ type Comment struct {
 }
 
 type Labels struct {
-	Nodes []Label `json:"label"`
+	Nodes []Label `json:"nodes"`
 }
 
 type Label struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
+}
+
+func (idata Data) UniqueLogins() []string {
+	users := make(map[string]struct{})
+	issues := idata.Issues.Nodes
+	for i := range issues {
+		users[issues[i].Author.Login] = struct{}{}
+		notes := issues[i].Comments.Nodes
+		for ii := range notes {
+			users[notes[ii].Author.Login] = struct{}{}
+		}
+	}
+
+	res := make([]string, len(users))
+	var count int
+	for k := range users {
+		res[count] = k
+		count++
+	}
+	return res
 }

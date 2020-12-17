@@ -8,7 +8,7 @@ import (
 	"github.com/dimus/glgh/entity/github"
 )
 
-type IssuesData struct {
+type Data struct {
 	Project `json:"project"`
 }
 
@@ -23,6 +23,7 @@ type Issues struct {
 
 type Issue struct {
 	IID         string `json:"iid"`
+	WebURL      string `json:"webUrl"`
 	Author      User   `json:"author"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
@@ -45,6 +46,7 @@ type Label struct {
 }
 
 type User struct {
+	ID       string `json:"id,omitempty"`
 	Username string `json:"username"`
 	Name     string `json:"name"`
 }
@@ -60,8 +62,8 @@ type Note struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
-func (idata IssuesData) ToGithubIssueData() github.IssuesData {
-	res := github.IssuesData{
+func (idata Data) ToGithubIssueData() github.Data {
+	res := github.Data{
 		Repository: github.Repository{
 			Issues: github.Issues{
 				TotalCount: idata.Issues.Count,
@@ -74,11 +76,16 @@ func (idata IssuesData) ToGithubIssueData() github.IssuesData {
 
 	for i := range issues {
 		id, _ := strconv.Atoi(issues[i].IID)
+		login := issues[i].Author.Username
+		if login == "mjy1" {
+			login = "mjy"
+		}
 		issue := github.Issue{
-			Author:    github.Actor{Login: issues[i].Author.Username},
+			Author:    github.Actor{Login: login},
 			Number:    id,
 			Title:     issues[i].Title,
 			Body:      issues[i].Description,
+			URL:       issues[i].WebURL,
 			CreatedAt: issues[i].CreatedAt,
 			ClosedAt:  issues[i].ClosedAt,
 			Closed:    issues[i].ClosedAt != nil,
@@ -99,6 +106,10 @@ func populateComments(issue Issue) []github.Comment {
 	notes := issue.Notes.Nodes
 	comments := make([]github.Comment, 0)
 	for i := range notes {
+		login := notes[i].Author.Username
+		if login == "mjy1" {
+			login = "mjy"
+		}
 		comment := github.Comment{
 			Author:    github.Actor{Login: notes[i].Author.Username},
 			Body:      notes[i].Body,

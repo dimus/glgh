@@ -23,8 +23,8 @@ func NewGitLabAPI(cfg config.Config) gitlab.GitLab {
 	return gitlabAPI{cfg: cfg}
 }
 
-func (g gitlabAPI) ReadIssues() (gitlab.IssuesData, error) {
-	var res gitlab.IssuesData
+func (g gitlabAPI) ReadIssues() (gitlab.Data, error) {
+	var res gitlab.Data
 	if sys.FileExists(g.cfg.GitLabFilePath()) && !g.cfg.Reimport {
 		return g.readDump()
 	}
@@ -37,9 +37,9 @@ func (g gitlabAPI) ReadIssues() (gitlab.IssuesData, error) {
 	return res, err
 }
 
-func (g gitlabAPI) readDump() (gitlab.IssuesData, error) {
+func (g gitlabAPI) readDump() (gitlab.Data, error) {
 	enc := encode.GNjson{}
-	var res gitlab.IssuesData
+	var res gitlab.Data
 
 	f, err := os.Open(g.cfg.GitLabFilePath())
 	if err != nil {
@@ -56,7 +56,7 @@ func (g gitlabAPI) readDump() (gitlab.IssuesData, error) {
 	return res, err
 }
 
-func (g gitlabAPI) writeDump(res gitlab.IssuesData) error {
+func (g gitlabAPI) writeDump(res gitlab.Data) error {
 	enc := encode.GNjson{Pretty: true}
 	encoded, err := enc.Encode(res)
 	if err != nil {

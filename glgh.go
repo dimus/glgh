@@ -1,7 +1,6 @@
 package glgh
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/dimus/glgh/config"
@@ -9,7 +8,6 @@ import (
 	"github.com/dimus/glgh/entity/gitlab"
 	"github.com/dimus/glgh/io/ghapi"
 	"github.com/dimus/glgh/io/glapi"
-	"github.com/gnames/gnlib/encode"
 )
 
 type glgh struct {
@@ -32,7 +30,18 @@ func (g glgh) Issues() error {
 		log.Fatal(err)
 	}
 	ghissues := issues.ToGithubIssueData()
-	json, _ := encode.GNjson{}.Encode(ghissues)
-	fmt.Printf("%+v\n", string(json))
+	logins := ghissues.UniqueLogins()
+	users, err := g.gh.MapUsers(logins)
+	if err != nil {
+		log.Printf("Error %T: %s", err, err)
+	}
+	repo, err := g.gh.RepositoryData()
+	if err != nil {
+		log.Printf("Error %T: %s", err, err)
+	}
+	err = g.gh.WriteIssues(ghissues.Issues.Nodes, repo, users)
+	if err != nil {
+		log.Printf("Error %T: %s", err, err)
+	}
 	return nil
 }
