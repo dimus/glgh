@@ -16,11 +16,6 @@ query($repo: ID!) {
         }
         title
         description
-        discussions {
-          nodes {
-            createdAt
-          }
-        }
         notes {
           nodes {
             author {

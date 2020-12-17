@@ -38,7 +38,7 @@ func (g gitlabAPI) ReadIssues() (gitlab.IssuesData, error) {
 }
 
 func (g gitlabAPI) readDump() (gitlab.IssuesData, error) {
-	enc := encode.GNgob{}
+	enc := encode.GNjson{}
 	var res gitlab.IssuesData
 
 	f, err := os.Open(g.cfg.GitLabFilePath())
@@ -57,7 +57,7 @@ func (g gitlabAPI) readDump() (gitlab.IssuesData, error) {
 }
 
 func (g gitlabAPI) writeDump(res gitlab.IssuesData) error {
-	enc := encode.GNgob{}
+	enc := encode.GNjson{Pretty: true}
 	encoded, err := enc.Encode(res)
 	if err != nil {
 		return err

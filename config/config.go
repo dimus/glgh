@@ -33,7 +33,7 @@ func (c Config) GitLabRepoPath() string {
 }
 
 func (c Config) GitLabFilePath() string {
-	return filepath.Join(c.WorkDir, "gitlab_issues_dump.gob")
+	return filepath.Join(c.WorkDir, "gitlab_issues_dump.json")
 }
 
 type Option func(*Config)

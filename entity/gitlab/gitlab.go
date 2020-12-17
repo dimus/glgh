@@ -1,6 +1,12 @@
 package gitlab
 
-import "time"
+import (
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/dimus/glgh/entity/github"
+)
 
 type IssuesData struct {
 	Project `json:"project"`
@@ -16,22 +22,26 @@ type Issues struct {
 }
 
 type Issue struct {
-	IID         string `json:"id"`
+	IID         string `json:"iid"`
 	Author      User   `json:"author"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
-	Discussions `json:"discussions"`
 	Notes       `json:"notes"`
-	CreatedAt   time.Time `json:"createdAt"`
-	ClosedAt    time.Time `json:"closedAt"`
-}
-
-type Discussions struct {
-	Nodes []Discussion `json:"nodes"`
+	Labels      `json:"labels"`
+	CreatedAt   time.Time  `json:"createdAt"`
+	ClosedAt    *time.Time `json:"closedAt,omitempty"`
 }
 
 type Notes struct {
 	Nodes []Note `json:"nodes"`
+}
+
+type Labels struct {
+	Nodes []Label `json:"nodes"`
+}
+
+type Label struct {
+	Title string
 }
 
 type User struct {
@@ -48,4 +58,66 @@ type Note struct {
 	Author    User      `json:"author"`
 	Body      string    `json:"body"`
 	CreatedAt time.Time `json:"createdAt"`
+}
+
+func (idata IssuesData) ToGithubIssueData() github.IssuesData {
+	res := github.IssuesData{
+		Repository: github.Repository{
+			Issues: github.Issues{
+				TotalCount: idata.Issues.Count,
+			},
+		},
+	}
+
+	issues := idata.Issues.Nodes
+	ghIssues := make([]github.Issue, len(issues))
+
+	for i := range issues {
+		id, _ := strconv.Atoi(issues[i].IID)
+		issue := github.Issue{
+			Author:    github.Actor{Login: issues[i].Author.Username},
+			Number:    id,
+			Title:     issues[i].Title,
+			Body:      issues[i].Description,
+			CreatedAt: issues[i].CreatedAt,
+			ClosedAt:  issues[i].ClosedAt,
+			Closed:    issues[i].ClosedAt != nil,
+			Comments: github.Comments{
+				Nodes: populateComments(issues[i]),
+			},
+			Labels: github.Labels{
+				Nodes: populateLabels(issues[i]),
+			},
+		}
+		ghIssues[i] = issue
+	}
+	res.Issues.Nodes = ghIssues
+	return res
+}
+
+func populateComments(issue Issue) []github.Comment {
+	notes := issue.Notes.Nodes
+	comments := make([]github.Comment, 0)
+	for i := range notes {
+		comment := github.Comment{
+			Author:    github.Actor{Login: notes[i].Author.Username},
+			Body:      notes[i].Body,
+			CreatedAt: notes[i].CreatedAt,
+		}
+		if !strings.HasPrefix(comment.Body, "closed via commit") {
+			comments = append(comments, comment)
+		}
+	}
+	return comments
+}
+
+func populateLabels(issue Issue) []github.Label {
+	labels := issue.Labels.Nodes
+	ghlabels := make([]github.Label, len(labels))
+	for i := range labels {
+		ghlabels[i] = github.Label{
+			Name: labels[i].Title,
+		}
+	}
+	return ghlabels
 }

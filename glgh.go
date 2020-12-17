@@ -31,7 +31,8 @@ func (g glgh) Issues() error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	json, _ := encode.GNjson{}.Encode(issues)
+	ghissues := issues.ToGithubIssueData()
+	json, _ := encode.GNjson{}.Encode(ghissues)
 	fmt.Printf("%+v\n", string(json))
 	return nil
 }
